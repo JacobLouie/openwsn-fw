@@ -371,7 +371,7 @@
  *
  */
 #ifndef DAGROOT
-#define DAGROOT (0)
+#define DAGROOT (1)
 #endif
 
 /**
@@ -381,7 +381,7 @@
  *
  */
 #ifndef PANID_DEFINED
-#define PANID_DEFINED   (0xcafe)
+#define PANID_DEFINED   (0xacfe)//(0xcafe)
 #endif
 
 // ======================== Board configuration ========================
