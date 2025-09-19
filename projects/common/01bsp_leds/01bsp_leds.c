@@ -22,9 +22,23 @@ void some_delay(void);
 \brief The program starts executing here.
 */
 int mote_main(void) {uint8_t i;
+  
+    board_init();
+
+    // LED circular shift function
+    leds_all_off();   
+    leds_error_on();  some_delay(); leds_error_off(); // LED 1
+    leds_sync_on();   some_delay(); leds_sync_off();  // LED 2
+    leds_debug_on();  some_delay(); leds_debug_off(); // LED 4
+    leds_radio_on();  some_delay(); leds_radio_off(); // LED 3
+    leds_error_on();  some_delay(); leds_error_off(); // LED 1
+    
+    board_reset();
    
-   board_init();
-   
+    return 0;
+    
+
+   /*
    // error LED functions
    leds_error_on();          some_delay();
    leds_error_off();         some_delay();
@@ -69,6 +83,7 @@ int mote_main(void) {uint8_t i;
    board_reset();
    
    return 0;
+   */
 }
 
 void some_delay(void) {
