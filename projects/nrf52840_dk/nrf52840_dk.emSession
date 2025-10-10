@@ -12,6 +12,8 @@
  <Memory4/>
  <Project>
   <ProjectSessionItem path="nrf52840-dk"/>
+  <ProjectSessionItem path="nrf52840-dk;01bsp_sctimer"/>
+  <ProjectSessionItem path="nrf52840-dk;01bsp_sctimer;application"/>
  </Project>
  <Register1/>
  <Register2/>
@@ -35,6 +37,9 @@
  <Watch4>
   <Watches active="0" update="Never"/>
  </Watch4>
- <Files/>
- <EMStudioWindow activeProject="01bsp_bmx160" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="" debugSearchPath="" autoConnectCapabilities="3199"/>
+ <Files>
+  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="85" useTextEdit="1" path="../common/01bsp_leds/01bsp_leds.c" left="0" top="9" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" path="../common/01bsp_sctimer/01bsp_sctimer.c" left="0" selected="1" top="18" codecName="Default"/>
+ </Files>
+ <EMStudioWindow activeProject="01bsp_bmx160" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

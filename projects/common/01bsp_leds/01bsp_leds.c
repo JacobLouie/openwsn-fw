@@ -87,6 +87,6 @@ int mote_main(void) {uint8_t i;
 }
 
 void some_delay(void) {
-   volatile uint16_t delay;
-   for (delay=0xffff;delay>0;delay--);
+   volatile uint32_t delay;
+   for (delay=0x186A00;delay>0;delay--);
 }
