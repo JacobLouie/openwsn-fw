@@ -26,14 +26,17 @@ TeraTerm):
 //=========================== defines =========================================
 
 #define SCTIMER_PERIOD     0xffff // 0xffff@32kHz = 2s
-uint8_t stringToSend[]       = "Hello, World!\r\n";
+#define RX_BUFFER_SIZE     255 
 
 //=========================== variables =======================================
 
 typedef struct {
               uint8_t uart_lastTxByteIndex;
-   volatile   uint8_t uartDone;
-   volatile   uint8_t uartSendNow;
+    volatile  uint8_t uartDone;
+
+              uint8_t rxBuffer[RX_BUFFER_SIZE];
+              uint8_t rxIndex;
+    volatile  uint8_t msgEnd;
 } app_vars_t;
 
 app_vars_t app_vars;
@@ -51,67 +54,66 @@ uint8_t cb_uartRxCb(void);
 */
 int mote_main(void) {
    
-   // clear local variable
-   memset(&app_vars,0,sizeof(app_vars_t));
-    
-   app_vars.uartSendNow = 1;
+  // clear local variable
+  memset(&app_vars,0,sizeof(app_vars_t));
+
+  // initialize the board
+  board_init();
+
+  // setup UART
+  uart_setCallbacks(cb_uartTxDone,cb_uartRxCb);
+  uart_enableInterrupts();
    
-   // initialize the board
-   board_init();
-   
-   // setup UART
-   uart_setCallbacks(cb_uartTxDone,cb_uartRxCb);
-   uart_enableInterrupts();
-   
-   // setup sctimer
-   sctimer_set_callback(cb_compare);
-   sctimer_setCompare(sctimer_readCounter()+SCTIMER_PERIOD);
-   
-   while(1) {
-      
-      // wait for timer to elapse
-      while (app_vars.uartSendNow==0);
-      app_vars.uartSendNow = 0;
-      
-      // send string over UART
-      app_vars.uartDone              = 0;
-      app_vars.uart_lastTxByteIndex  = 0;
-      uart_writeByte(stringToSend[app_vars.uart_lastTxByteIndex]);
-      while(app_vars.uartDone==0);
-   }
+  while(1) {
+
+    // '/n' detected, replay message
+    if (app_vars.msgEnd) {
+        app_vars.msgEnd = 0;  // clear flag
+        app_vars.uart_lastTxByteIndex = 0;
+
+        while(app_vars.uart_lastTxByteIndex < app_vars.rxIndex){
+          app_vars.uartDone = 0;
+          uart_writeByte(app_vars.rxBuffer[app_vars.uart_lastTxByteIndex]);
+          app_vars.uart_lastTxByteIndex++;
+          while (app_vars.uartDone==0);
+        }
+
+        app_vars.rxIndex = 0;   // reset buffer index
+        memset(app_vars.rxBuffer, 0, RX_BUFFER_SIZE);
+    }
+  }
 }
 
 //=========================== callbacks =======================================
 
-void cb_compare(void) {
-   
-   // have main "task" send over UART
-   app_vars.uartSendNow = 1;
-   
-   // schedule again
-   sctimer_setCompare(sctimer_readCounter()+SCTIMER_PERIOD);
-}
-
 void cb_uartTxDone(void) {
-   app_vars.uart_lastTxByteIndex++;
-   if (app_vars.uart_lastTxByteIndex<sizeof(stringToSend)) {
-      uart_writeByte(stringToSend[app_vars.uart_lastTxByteIndex]);
-   } else {
-      app_vars.uartDone = 1;
-   }
+    app_vars.uartDone = 1;
 }
 
 uint8_t cb_uartRxCb(void) {
-   uint8_t byte;
-   
-   // toggle LED
-   leds_error_toggle();
-   
-   // read received byte
-   byte = uart_readByte();
-   
-   // echo that byte over serial
-   uart_writeByte(byte);
-   
-   return 0;
+  uint8_t byte;
+
+  // read received byte
+  byte = uart_readByte();
+
+  // toggle LED to show activity
+  leds_error_toggle();
+
+  // end of message
+  if (byte == '\n') {   
+      app_vars.rxBuffer[app_vars.rxIndex++] = '\n';
+      app_vars.rxBuffer[app_vars.rxIndex] = '\r';
+      app_vars.msgEnd = 1;
+  } 
+  else {
+    // store byte in buffer
+    if (app_vars.rxIndex < RX_BUFFER_SIZE - 1) {
+        app_vars.rxBuffer[app_vars.rxIndex++] = byte;
+    } else {
+        // loop buffer
+        app_vars.rxIndex = 0;
+    }
+  }
+
+  return 0;
 }

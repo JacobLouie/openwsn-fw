@@ -21,12 +21,14 @@ The sctimer is periodic, of period SCTIMER_PERIOD ticks. Each time it elapses:
 
 //=========================== defines =========================================
 
-#define SCTIMER_PERIOD     32768 // @32kHz = 1s
+#define SCTIMER_500ms      16384 // @32kHz = 500ms
 
 //=========================== variables =======================================
 
 typedef struct {
-   uint16_t num_compare;
+    uint8_t led2_count;
+    uint8_t led3_count;
+    uint8_t led4_count;
 } app_vars_t;
 
 app_vars_t app_vars;
@@ -34,6 +36,7 @@ app_vars_t app_vars;
 //=========================== prototypes ======================================
 
 void cb_compare(void);
+void some_delay(void);
 
 //=========================== main ============================================
 
@@ -42,30 +45,61 @@ void cb_compare(void);
 */
 int mote_main(void) {  
    
-   // initialize board. 
-   board_init();
-   
-   sctimer_set_callback(cb_compare);
-   sctimer_setCompare(sctimer_readCounter()+SCTIMER_PERIOD);
-   
-   while (1) {
-      board_sleep();
-   }
+  // initialize board. 
+  board_init();
+  memset(&app_vars, 0, sizeof(app_vars_t));
+
+  sctimer_set_callback(cb_compare);
+  sctimer_setCompare(sctimer_readCounter()+SCTIMER_500ms);
+
+  while (1) {
+    board_sleep();
+  }
 }
 
 //=========================== callbacks =======================================
 
-void cb_compare(void) {
-   
-   // toggle pin
-   debugpins_frame_toggle();
-   
-   // toggle error led
-   leds_error_toggle();
-   
-   // increment counter
-   app_vars.num_compare++;
-   
-   // schedule again
-   sctimer_setCompare(sctimer_readCounter()+SCTIMER_PERIOD);
+void cb_compare(void){
+  uint32_t currentTime = sctimer_readCounter();
+  // toggle pin
+  //debugpins_frame_toggle();
+
+  app_vars.led2_count++;
+  app_vars.led3_count++;
+  app_vars.led4_count++;
+  
+  // LED 1 every 500ms
+  leds_error_on();
+
+  // LED 2 every 1000ms
+  if (app_vars.led2_count == 2){
+    // toggle error led
+    leds_sync_on();
+    app_vars.led2_count = 0;
+  };
+
+  // LED 3 every 1500ms
+  if (app_vars.led3_count == 3){
+    // toggle sync led
+    leds_radio_on();
+    app_vars.led3_count = 0;
+  };
+
+  // LED 4 every 2000ms
+  if (app_vars.led4_count == 4){
+    // toggle radio led
+    leds_debug_on();
+    app_vars.led4_count = 0;
+  };
+ 
+  // schedule again
+  sctimer_setCompare(sctimer_readCounter()+SCTIMER_500ms);
+
+  some_delay();
+  leds_all_off();
+}
+
+void some_delay(void) {
+   volatile uint32_t delay;
+   for (delay=0x186A00;delay>0;delay--);
 }
