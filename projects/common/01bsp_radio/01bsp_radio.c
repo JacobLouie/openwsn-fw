@@ -27,11 +27,11 @@ end of frame event), it will turn on its error LED.
 
 #define LENGTH_PACKET   125+LENGTH_CRC  ///< maximum length is 127 bytes
 #define LEN_PKT_TO_SEND 20+LENGTH_CRC
-#define CHANNEL         11             ///< 11=2.405GHz
-#define TIMER_PERIOD    (0xffff>>4)    ///< 0xffff = 2s@32kHz
+#define CHANNEL         12             ///< 11=2.405GHz
+#define TIMER_PERIOD    (0xffff>>8)    ///< 0xffff = 2s@32kHz
 #define ID              0x99           ///< byte sent in the packets
 
-uint8_t stringToSend[]  = "+002 Ptest.24.00.12.-010\n";
+uint8_t stringToSend[50];
 
 //=========================== variables =======================================
 
@@ -51,8 +51,8 @@ typedef struct {
     uint8_t              num_endFrame;
     uint8_t              num_timer;
     
-    uint8_t              num_rx_startFrame;
-    uint8_t              num_rx_endFrame;
+    uint16_t              num_rx_startFrame;
+    uint16_t              num_rx_endFrame;
 } app_dbg_t;
 
 app_dbg_t app_dbg;
@@ -209,9 +209,10 @@ int mote_main(void) {
                         stringToSend[i++] = '0'+read%10;
                         stringToSend[i++] = ' ';
 
-                        stringToSend[i++] = 'P';
                         memcpy(&stringToSend[i],&app_vars.packet[0],14);
                         i += 14;
+                        
+                        stringToSend[i++] = ' ';
 
                         sign = (app_vars.rxpk_rssi & 0x80) >> 7;
                         if (sign){
@@ -228,6 +229,28 @@ int mote_main(void) {
                         stringToSend[i++] = '0'+read/100;
                         stringToSend[i++] = '0'+read/10;
                         stringToSend[i++] = '0'+read%10;
+
+                        stringToSend[i++] = ' ';
+                        
+                        stringToSend[i++] = 'p';
+                        stringToSend[i++] = 'k';
+                        stringToSend[i++] = '-';
+                        stringToSend[i++] = 'n';
+                        stringToSend[i++] = 'u';
+                        stringToSend[i++] = 'm';
+                        stringToSend[i++] = '=';
+
+                        uint8_t temp[5];
+                        uint16_t count = app_dbg.num_rx_endFrame;
+                        for (uint8_t j = 0; j < sizeof(temp); j++) {
+                          temp[j] = '0'+ count % 10; 
+                          count /= 10;
+                        }
+                        stringToSend[i++] = temp[4];
+                        stringToSend[i++] = temp[3];
+                        stringToSend[i++] = temp[2];
+                        stringToSend[i++] = temp[1];
+                        stringToSend[i++] = temp[0];
 
                         stringToSend[sizeof(stringToSend)-2] = '\r';
                         stringToSend[sizeof(stringToSend)-1] = '\n';
@@ -271,9 +294,13 @@ int mote_main(void) {
                     app_vars.packet_len = sizeof(app_vars.packet);
                     i = 0;
                     app_vars.packet[i++] = 't';
-                    app_vars.packet[i++] = 'e';
+                    app_vars.packet[i++] = 'x';
+                    app_vars.packet[i++] = ' ';
                     app_vars.packet[i++] = 's';
+                    app_vars.packet[i++] = 'e';
+                    app_vars.packet[i++] = 'n';
                     app_vars.packet[i++] = 't';
+                    app_vars.packet[i++] = ' ';
                     app_vars.packet[i++] = CHANNEL;
                     while (i<app_vars.packet_len) {
                         app_vars.packet[i++] = ID;
